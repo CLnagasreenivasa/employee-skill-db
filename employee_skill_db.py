@@ -110,6 +110,7 @@ with tab1:
 with tab2:
     st.header("Update or Delete Employees")
     keyword = st.text_input("Search by keyword (name, skills, etc.):", key="search_update")
+    update_message = ""
 
     if st.button("Search", key="btn_search_update"):
         results = flexible_search(keyword)
@@ -142,12 +143,14 @@ with tab2:
                             certifications, total_exp, relevant_exp,
                             location, aspiration, plan, str(target), resume_path
                         ))
-                        st.success("Record updated successfully!")
+                        update_message = f"✅ Record for {row[0]} updated successfully."
 
                     if st.button("❌ Delete", key=f"btn_delete_{idx}"):
                         delete_employee(row[0])
-                        st.warning(f"Deleted record for {row[0]}!")
+                        update_message = f"⚠️ Record for {row[0]} deleted."
 
+            if update_message:
+                st.success(update_message)
         else:
             st.warning("No matching records found.")
 
@@ -158,15 +161,19 @@ with tab3:
     if st.button("Search", key="btn_search_tab"):
         results = flexible_search(keyword)
         if results:
+            columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
+                       "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
+                       "Action Plan", "Target Date", "Resume Download"]
+            rows = []
             for row in results:
-                st.markdown(f"**{row[0]} - {row[1]}**")
-                st.write({
-                    "Email": row[2], "Role": row[3], "Primary Skills": row[4], "Secondary Skills": row[5],
-                    "Certifications": row[6], "Total Exp": row[7], "Relevant Exp": row[8],
-                    "Location": row[9], "Aspiration": row[10], "Action Plan": row[11], "Target Date": row[12]
-                })
+                download_button = ""
                 if row[13] and os.path.exists(row[13]):
                     with open(row[13], "rb") as f:
-                        st.download_button("📄 Download Resume", f, file_name=os.path.basename(row[13]), key=row[0])
+                        st.download_button(label=f"📄 Download Resume for {row[0]}", data=f,
+                                           file_name=os.path.basename(row[13]),
+                                           mime="application/octet-stream", key=f"dl_{row[0]}")
+                rows.append(row[:13] + (row[13],))
+            df = pd.DataFrame(rows, columns=columns)
+            st.dataframe(df.drop(columns=["Resume Download"]))  # Hide path column
         else:
             st.warning("No records matched your search.")
