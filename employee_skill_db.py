@@ -103,23 +103,28 @@ with tab1:
 
 with tab2:
     st.header("Search and Update Employee Record")
+
     if "matched_rows" not in st.session_state:
         st.session_state.matched_rows = []
     if "selected_emp_id" not in st.session_state:
-        st.session_state.selected_emp_id = None
+        st.session_state.selected_emp_id = ""
 
     keyword = st.text_input("Search by any field (ID, Name, Skills, etc.)", key="update_search")
 
     if st.button("Search", key="update_search_btn"):
-        rows = flexible_search(keyword)
-        if rows:
-            st.session_state.matched_rows = rows
-            emp_ids = [row[0] for row in rows]
-            st.session_state.selected_emp_id = st.selectbox("Select an Employee ID to Edit", emp_ids, key="edit_select")
+        matched = flexible_search(keyword)
+        if matched:
+            st.session_state.matched_rows = matched
+            st.session_state.selected_emp_id = ""
         else:
             st.warning("No records found.")
             st.session_state.matched_rows = []
-            st.session_state.selected_emp_id = None
+            st.session_state.selected_emp_id = ""
+
+    if st.session_state.matched_rows:
+        emp_ids = [f"{row[0]} - {row[1]}" for row in st.session_state.matched_rows]
+        selection = st.selectbox("Select a record to edit", emp_ids, key="select_emp_dropdown")
+        st.session_state.selected_emp_id = selection.split(" - ")[0]
 
     if st.session_state.selected_emp_id:
         row = next(row for row in st.session_state.matched_rows if row[0] == st.session_state.selected_emp_id)
