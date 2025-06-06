@@ -5,7 +5,7 @@ import os
 import pandas as pd
 
 # Database setup
-conn = sqlite3.connect("employee_data.db")
+conn = sqlite3.connect("employee_data.db", check_same_thread=False)
 c = conn.cursor()
 
 UPLOAD_DIR = "resumes"
@@ -35,8 +35,15 @@ def add_employee(data):
     c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
     conn.commit()
 
-def update_employee(emp_id, field, new_value):
-    c.execute(f"UPDATE employees SET {field} = ? WHERE employee_id = ?", (new_value, emp_id))
+def update_employee_record(emp_id, updated_data):
+    query = """
+    UPDATE employees SET
+        name=?, email=?, role=?, primary_skills=?, secondary_skills=?,
+        certifications=?, total_experience=?, relevant_experience=?,
+        current_location=?, career_aspiration=?, action_plan=?, target_date=?, resume_path=?
+    WHERE employee_id=?
+    """
+    c.execute(query, (*updated_data, emp_id))
     conn.commit()
 
 def flexible_search(keyword):
@@ -96,23 +103,50 @@ with tab1:
             st.warning("Employee ID and Name are mandatory!")
 
 with tab2:
-    st.header("Update Employee Record")
-    emp_id = st.text_input("Enter Employee ID", key="update_id")
-    field = st.selectbox("Field to Update", ["name", "email", "role", "primary_skills",
-                                             "secondary_skills", "certifications", "total_experience",
-                                             "relevant_experience", "current_location",
-                                             "career_aspiration", "action_plan", "target_date"])
-    new_value = st.text_input(f"New Value for {field}")
+    st.header("Search and Update Employee Record")
+    keyword = st.text_input("Search by any field (ID, Name, Skills, etc.)", key="update_search")
+    matched_rows = []
+    selected = None
 
-    if st.button("Update", key="submit_update"):
-        if emp_id and new_value:
-            try:
-                update_employee(emp_id, field, new_value)
-                st.success("Employee data updated.")
-            except Exception as e:
-                st.error(f"Error: {e}")
-        else:
-            st.warning("All fields required!")
+    if st.button("Search", key="update_search_btn"):
+        matched_rows = flexible_search(keyword)
+        if matched_rows:
+            df = pd.DataFrame(matched_rows, columns=["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
+                                                      "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
+                                                      "Action Plan", "Target Date", "Resume Path"])
+            st.dataframe(df)
+            emp_ids = [row[0] for row in matched_rows]
+            selected = st.selectbox("Select an Employee ID to Edit", emp_ids)
+
+    if selected:
+        row = next(row for row in matched_rows if row[0] == selected)
+        st.subheader(f"Editing Record for {selected}")
+        name = st.text_input("Name", row[1])
+        email = st.text_input("Email", row[2])
+        role = st.text_input("Role", row[3])
+        primary_skills = st.text_input("Primary Skills", row[4])
+        secondary_skills = st.text_input("Secondary Skills", row[5])
+        certifications = st.text_input("Certifications", row[6])
+        total_exp = st.number_input("Total Exp", value=row[7])
+        relevant_exp = st.number_input("Relevant Exp", value=row[8])
+        location = st.text_input("Location", row[9])
+        aspiration = st.text_area("Aspiration", row[10])
+        plan = st.text_area("Action Plan", row[11])
+        target = st.date_input("Target Date", pd.to_datetime(row[12]))
+        resume = st.file_uploader("Update Resume", type=["pdf", "docx"])
+
+        if st.button("Update Record", key="submit_record_update"):
+            resume_path = row[13]
+            if resume:
+                resume_path = os.path.join(UPLOAD_DIR, f"{selected}_{resume.name}")
+                with open(resume_path, "wb") as f:
+                    f.write(resume.read())
+
+            updated_data = (name, email, role, primary_skills, secondary_skills,
+                            certifications, total_exp, relevant_exp, location,
+                            aspiration, plan, str(target), resume_path)
+            update_employee_record(selected, updated_data)
+            st.success("Record updated successfully!")
 
 with tab3:
     st.header("Search Employees (by ID, Name, Skills, etc.)")
