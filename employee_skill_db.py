@@ -116,24 +116,24 @@ with tab2:
                                                       "Action Plan", "Target Date", "Resume Path"])
             st.dataframe(df)
             emp_ids = [row[0] for row in matched_rows]
-            selected = st.selectbox("Select an Employee ID to Edit", emp_ids)
+            selected = st.selectbox("Select an Employee ID to Edit", emp_ids, key="edit_select")
 
     if selected:
         row = next(row for row in matched_rows if row[0] == selected)
         st.subheader(f"Editing Record for {selected}")
-        name = st.text_input("Name", row[1])
-        email = st.text_input("Email", row[2])
-        role = st.text_input("Role", row[3])
-        primary_skills = st.text_input("Primary Skills", row[4])
-        secondary_skills = st.text_input("Secondary Skills", row[5])
-        certifications = st.text_input("Certifications", row[6])
-        total_exp = st.number_input("Total Exp", value=row[7])
-        relevant_exp = st.number_input("Relevant Exp", value=row[8])
-        location = st.text_input("Location", row[9])
-        aspiration = st.text_area("Aspiration", row[10])
-        plan = st.text_area("Action Plan", row[11])
-        target = st.date_input("Target Date", pd.to_datetime(row[12]))
-        resume = st.file_uploader("Update Resume", type=["pdf", "docx"])
+        name = st.text_input("Name", row[1], key="edit_name")
+        email = st.text_input("Email", row[2], key="edit_email")
+        role = st.text_input("Role", row[3], key="edit_role")
+        primary_skills = st.text_input("Primary Skills", row[4], key="edit_primary")
+        secondary_skills = st.text_input("Secondary Skills", row[5], key="edit_secondary")
+        certifications = st.text_input("Certifications", row[6], key="edit_certs")
+        total_exp = st.number_input("Total Exp", value=row[7], key="edit_total_exp")
+        relevant_exp = st.number_input("Relevant Exp", value=row[8], key="edit_relevant_exp")
+        location = st.text_input("Location", row[9], key="edit_location")
+        aspiration = st.text_area("Aspiration", row[10], key="edit_aspiration")
+        plan = st.text_area("Action Plan", row[11], key="edit_plan")
+        target = st.date_input("Target Date", pd.to_datetime(row[12]), key="edit_date")
+        resume = st.file_uploader("Update Resume", type=["pdf", "docx"], key="edit_resume")
 
         if st.button("Update Record", key="submit_record_update"):
             resume_path = row[13]
@@ -150,7 +150,7 @@ with tab2:
 
 with tab3:
     st.header("Search Employees (by ID, Name, Skills, etc.)")
-    keyword = st.text_input("Enter any search keyword")
+    keyword = st.text_input("Enter any search keyword", key="search_generic")
     if st.button("Search", key="submit_search"):
         results = flexible_search(keyword)
         if results:
