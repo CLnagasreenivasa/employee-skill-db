@@ -31,21 +31,6 @@ CREATE TABLE IF NOT EXISTS employees (
 """)
 conn.commit()
 
-def add_employee(data):
-    c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
-    conn.commit()
-
-def update_employee_record(emp_id, updated_data):
-    query = """
-    UPDATE employees SET
-        name=?, email=?, role=?, primary_skills=?, secondary_skills=?,
-        certifications=?, total_experience=?, relevant_experience=?,
-        current_location=?, career_aspiration=?, action_plan=?, target_date=?, resume_path=?
-    WHERE employee_id=?
-    """
-    c.execute(query, (*updated_data, emp_id))
-    conn.commit()
-
 def flexible_search(keyword):
     keyword = f"%{keyword.lower()}%"
     query = """
@@ -62,10 +47,30 @@ def flexible_search(keyword):
     c.execute(query, (keyword,)*8)
     return c.fetchall()
 
+def add_employee(data):
+    c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
+    conn.commit()
+
+def update_employee(emp_id, field_values):
+    query = """
+    UPDATE employees SET
+        name=?, email=?, role=?, primary_skills=?, secondary_skills=?,
+        certifications=?, total_experience=?, relevant_experience=?,
+        current_location=?, career_aspiration=?, action_plan=?, target_date=?, resume_path=?
+    WHERE employee_id=?
+    """
+    c.execute(query, (*field_values, emp_id))
+    conn.commit()
+
+def delete_employee(emp_id):
+    c.execute("DELETE FROM employees WHERE employee_id=?", (emp_id,))
+    conn.commit()
+
 st.title("🧠 Employee Skill Database")
 
-tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update Employee", "🔍 Search Employees"])
+tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update / Delete", "🔍 Search Employees"])
 
+# Add employee
 with tab1:
     st.header("Add New Employee")
     emp_id = st.text_input("Employee ID")
@@ -101,61 +106,61 @@ with tab1:
         else:
             st.warning("Employee ID and Name are mandatory!")
 
+# Update/Delete employee
 with tab2:
-    st.header("Search and Update Employee Record")
+    st.header("Update or Delete Employees")
+    keyword = st.text_input("Search by keyword (name, skills, etc.):", key="search_update")
 
-    if "matched_rows" not in st.session_state:
-        st.session_state.matched_rows = []
-    if "selected_emp_id" not in st.session_state:
-        st.session_state.selected_emp_id = ""
+    if st.button("Search", key="btn_search_update"):
+        results = flexible_search(keyword)
+        if results:
+            for idx, row in enumerate(results):
+                with st.expander(f"🔧 Edit: {row[0]} - {row[1]}"):
+                    name = st.text_input("Name", row[1], key=f"edit_name_{idx}")
+                    email = st.text_input("Email", row[2], key=f"edit_email_{idx}")
+                    role = st.text_input("Role", row[3], key=f"edit_role_{idx}")
+                    primary_skills = st.text_input("Primary Skills", row[4], key=f"edit_primary_{idx}")
+                    secondary_skills = st.text_input("Secondary Skills", row[5], key=f"edit_secondary_{idx}")
+                    certifications = st.text_input("Certifications", row[6], key=f"edit_cert_{idx}")
+                    total_exp = st.number_input("Total Exp", value=row[7], key=f"edit_total_{idx}")
+                    relevant_exp = st.number_input("Relevant Exp", value=row[8], key=f"edit_relevant_{idx}")
+                    location = st.text_input("Location", row[9], key=f"edit_location_{idx}")
+                    aspiration = st.text_area("Aspiration", row[10], key=f"edit_aspiration_{idx}")
+                    plan = st.text_area("Action Plan", row[11], key=f"edit_plan_{idx}")
+                    target = st.date_input("Target Date", pd.to_datetime(row[12]), key=f"edit_target_{idx}")
+                    resume = st.file_uploader("Upload Resume", type=["pdf", "docx"], key=f"edit_resume_{idx}")
 
-    keyword = st.text_input("Search by any field (ID, Name, Skills, etc.)", key="update_search")
+                    resume_path = row[13]
+                    if resume:
+                        resume_path = os.path.join(UPLOAD_DIR, f"{row[0]}_{resume.name}")
+                        with open(resume_path, "wb") as f:
+                            f.write(resume.read())
 
-    if st.button("Search", key="update_search_btn"):
-        matched = flexible_search(keyword)
-        if matched:
-            st.session_state.matched_rows = matched
-            st.session_state.selected_emp_id = ""
+                    if st.button("Update", key=f"btn_update_{idx}"):
+                        update_employee(row[0], (
+                            name, email, role, primary_skills, secondary_skills,
+                            certifications, total_exp, relevant_exp,
+                            location, aspiration, plan, str(target), resume_path
+                        ))
+                        st.success("Record updated successfully!")
+
+                    if st.button("❌ Delete", key=f"btn_delete_{idx}"):
+                        delete_employee(row[0])
+                        st.warning(f"Deleted record for {row[0]}!")
+
         else:
-            st.warning("No records found.")
-            st.session_state.matched_rows = []
-            st.session_state.selected_emp_id = ""
+            st.warning("No matching records found.")
 
-    if st.session_state.matched_rows:
-        st.write("### Select an employee to update:")
-        selected = st.radio(
-            "Matching Employees",
-            [f"{row[0]} - {row[1]} ({row[2]})" for row in st.session_state.matched_rows],
-            key="radio_select"
-        )
-        st.session_state.selected_emp_id = selected.split(" - ")[0]
-
-    if st.session_state.selected_emp_id:
-        row = next(row for row in st.session_state.matched_rows if row[0] == st.session_state.selected_emp_id)
-        st.subheader(f"Editing Record for {row[0]}")
-        name = st.text_input("Name", row[1], key="edit_name")
-        email = st.text_input("Email", row[2], key="edit_email")
-        role = st.text_input("Role", row[3], key="edit_role")
-        primary_skills = st.text_input("Primary Skills", row[4], key="edit_primary")
-        secondary_skills = st.text_input("Secondary Skills", row[5], key="edit_secondary")
-        certifications = st.text_input("Certifications", row[6], key="edit_certs")
-        total_exp = st.number_input("Total Exp", value=row[7], key="edit_total_exp")
-        relevant_exp = st.number_input("Relevant Exp", value=row[8], key="edit_relevant_exp")
-        location = st.text_input("Location", row[9], key="edit_location")
-        aspiration = st.text_area("Aspiration", row[10], key="edit_aspiration")
-        plan = st.text_area("Action Plan", row[11], key="edit_plan")
-        target = st.date_input("Target Date", pd.to_datetime(row[12]), key="edit_date")
-        resume = st.file_uploader("Update Resume", type=["pdf", "docx"], key="edit_resume")
-
-        if st.button("Update Record", key="submit_record_update"):
-            resume_path = row[13]
-            if resume:
-                resume_path = os.path.join(UPLOAD_DIR, f"{row[0]}_{resume.name}")
-                with open(resume_path, "wb") as f:
-                    f.write(resume.read())
-
-            updated_data = (name, email, role, primary_skills, secondary_skills,
-                            certifications, total_exp, relevant_exp, location,
-                            aspiration, plan, str(target), resume_path)
-            update_employee_record(row[0], updated_data)
-            st.success("Record updated successfully!")
+# Search tab
+with tab3:
+    st.header("Search Employees (by ID, Name, Skills, etc.)")
+    keyword = st.text_input("Enter any search keyword", key="search_tab")
+    if st.button("Search", key="btn_search_tab"):
+        results = flexible_search(keyword)
+        if results:
+            columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
+                       "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
+            df = pd.DataFrame(results, columns=columns)
+            st.dataframe(df)
+        else:
+            st.warning("No records matched your search.")
