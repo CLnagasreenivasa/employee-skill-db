@@ -60,8 +60,7 @@ def flexible_search(keyword):
     LOWER(current_location) LIKE ?
     """
     c.execute(query, (keyword,)*8)
-    rows = c.fetchall()
-    return rows
+    return c.fetchall()
 
 st.title("🧠 Employee Skill Database")
 
@@ -104,23 +103,27 @@ with tab1:
 
 with tab2:
     st.header("Search and Update Employee Record")
+    if "matched_rows" not in st.session_state:
+        st.session_state.matched_rows = []
+    if "selected_emp_id" not in st.session_state:
+        st.session_state.selected_emp_id = None
+
     keyword = st.text_input("Search by any field (ID, Name, Skills, etc.)", key="update_search")
-    matched_rows = []
-    selected = None
 
     if st.button("Search", key="update_search_btn"):
-        matched_rows = flexible_search(keyword)
-        if matched_rows:
-            df = pd.DataFrame(matched_rows, columns=["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
-                                                      "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
-                                                      "Action Plan", "Target Date", "Resume Path"])
-            st.dataframe(df)
-            emp_ids = [row[0] for row in matched_rows]
-            selected = st.selectbox("Select an Employee ID to Edit", emp_ids, key="edit_select")
+        rows = flexible_search(keyword)
+        if rows:
+            st.session_state.matched_rows = rows
+            emp_ids = [row[0] for row in rows]
+            st.session_state.selected_emp_id = st.selectbox("Select an Employee ID to Edit", emp_ids, key="edit_select")
+        else:
+            st.warning("No records found.")
+            st.session_state.matched_rows = []
+            st.session_state.selected_emp_id = None
 
-    if selected:
-        row = next(row for row in matched_rows if row[0] == selected)
-        st.subheader(f"Editing Record for {selected}")
+    if st.session_state.selected_emp_id:
+        row = next(row for row in st.session_state.matched_rows if row[0] == st.session_state.selected_emp_id)
+        st.subheader(f"Editing Record for {row[0]}")
         name = st.text_input("Name", row[1], key="edit_name")
         email = st.text_input("Email", row[2], key="edit_email")
         role = st.text_input("Role", row[3], key="edit_role")
@@ -138,14 +141,14 @@ with tab2:
         if st.button("Update Record", key="submit_record_update"):
             resume_path = row[13]
             if resume:
-                resume_path = os.path.join(UPLOAD_DIR, f"{selected}_{resume.name}")
+                resume_path = os.path.join(UPLOAD_DIR, f"{row[0]}_{resume.name}")
                 with open(resume_path, "wb") as f:
                     f.write(resume.read())
 
             updated_data = (name, email, role, primary_skills, secondary_skills,
                             certifications, total_exp, relevant_exp, location,
                             aspiration, plan, str(target), resume_path)
-            update_employee_record(selected, updated_data)
+            update_employee_record(row[0], updated_data)
             st.success("Record updated successfully!")
 
 with tab3:
