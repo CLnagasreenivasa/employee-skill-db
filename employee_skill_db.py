@@ -62,11 +62,14 @@ def delete_employee(emp_id):
     c.execute("DELETE FROM employees WHERE employee_id=?", (emp_id,))
     conn.commit()
 
-# Focused UI: Update / Delete Only
+# UI
+st.set_page_config(layout="wide")
 st.title("✏️ Update / Delete Employees")
 
-keyword = st.text_input("Search by keyword (ID, name, skills...)", key="search_update")
-action_status = st.empty()
+keyword = st.text_input("Search by keyword (name, ID, skills...)", key="search_update")
+result_container = st.empty()
+updated = False
+deleted = False
 
 if st.button("Search", key="search_btn_update"):
     results = flexible_search(keyword)
@@ -85,7 +88,7 @@ if st.button("Search", key="search_btn_update"):
                 aspiration = st.text_area("Aspiration", row[10], key=f"asp_{idx}")
                 plan = st.text_area("Action Plan", row[11], key=f"plan_{idx}")
                 target = st.date_input("Target Date", pd.to_datetime(row[12]), key=f"tgt_{idx}")
-                resume_path = row[13]  # Keep existing resume path
+                resume_path = row[13]
 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -95,11 +98,16 @@ if st.button("Search", key="search_btn_update"):
                             certifications, total_exp, relevant_exp, location,
                             aspiration, plan, str(target), resume_path
                         ))
-                        action_status.success(f"✅ Record {row[0]} updated successfully!")
+                        updated = True
 
                 with col2:
                     if st.button("❌ Delete", key=f"delete_{idx}"):
                         delete_employee(row[0])
-                        action_status.warning(f"⚠️ Record {row[0]} deleted.")
+                        deleted = True
+
+        if updated:
+            result_container.success("✅ Record(s) updated successfully!")
+        if deleted:
+            result_container.warning("⚠️ Record(s) deleted.")
     else:
         st.warning("No matching employees found.")
