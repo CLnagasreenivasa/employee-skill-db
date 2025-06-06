@@ -110,6 +110,7 @@ with tab1:
 with tab2:
     st.header("Update or Delete Employees")
     keyword = st.text_input("Search by keyword (name, skills, etc.):", key="search_update")
+    result_status = ""
 
     if st.button("Search", key="btn_search_update"):
         results = flexible_search(keyword)
@@ -142,12 +143,14 @@ with tab2:
                             certifications, total_exp, relevant_exp,
                             location, aspiration, plan, str(target), resume_path
                         ))
-                        st.success(f"✅ Record for {row[0]} updated successfully.")
+                        result_status = f"✅ Record for {row[0]} updated successfully."
 
                     if st.button("❌ Delete", key=f"btn_delete_{idx}"):
                         delete_employee(row[0])
-                        st.warning(f"⚠️ Record for {row[0]} deleted.")
+                        result_status = f"⚠️ Record for {row[0]} deleted."
 
+            if result_status:
+                st.success(result_status)
         else:
             st.warning("No matching records found.")
 
@@ -158,15 +161,18 @@ with tab3:
     if st.button("Search", key="btn_search_tab"):
         results = flexible_search(keyword)
         if results:
+            display_data = []
+            for row in results:
+                display_data.append(row[:13])
+
             columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
                        "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
                        "Action Plan", "Target Date"]
-            data = []
-            for idx, row in enumerate(results):
-                display_row = row[:13]
-                data.append(display_row)
 
-                # Show resume download directly below each record
+            df = pd.DataFrame(display_data, columns=columns)
+            st.dataframe(df)
+
+            for row in results:
                 if row[13] and os.path.exists(row[13]):
                     with open(row[13], "rb") as f:
                         st.download_button(
@@ -174,10 +180,7 @@ with tab3:
                             data=f,
                             file_name=os.path.basename(row[13]),
                             mime="application/octet-stream",
-                            key=f"resume_download_{row[0]}"
+                            key=f"resume_dl_{row[0]}"
                         )
-
-            df = pd.DataFrame(data, columns=columns)
-            st.dataframe(df)
         else:
             st.warning("No records matched your search.")
