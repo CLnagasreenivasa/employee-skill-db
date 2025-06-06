@@ -2,6 +2,7 @@
 import streamlit as st
 import sqlite3
 import os
+import pandas as pd
 
 # Database setup
 conn = sqlite3.connect("employee_data.db")
@@ -38,13 +39,26 @@ def update_employee(emp_id, field, new_value):
     c.execute(f"UPDATE employees SET {field} = ? WHERE employee_id = ?", (new_value, emp_id))
     conn.commit()
 
-def get_employee(emp_id):
-    c.execute("SELECT * FROM employees WHERE employee_id = ?", (emp_id,))
-    return c.fetchone()
+def flexible_search(keyword):
+    keyword = f"%{keyword.lower()}%"
+    query = """
+    SELECT * FROM employees WHERE
+    LOWER(employee_id) LIKE ? OR
+    LOWER(name) LIKE ? OR
+    LOWER(email) LIKE ? OR
+    LOWER(role) LIKE ? OR
+    LOWER(primary_skills) LIKE ? OR
+    LOWER(secondary_skills) LIKE ? OR
+    LOWER(certifications) LIKE ? OR
+    LOWER(current_location) LIKE ?
+    """
+    c.execute(query, (keyword,)*8)
+    rows = c.fetchall()
+    return rows
 
 st.title("🧠 Employee Skill Database")
 
-tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update Employee", "🔍 Search Employee"])
+tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update Employee", "🔍 Search Employees"])
 
 with tab1:
     st.header("Add New Employee")
@@ -101,15 +115,14 @@ with tab2:
             st.warning("All fields required!")
 
 with tab3:
-    st.header("Search Employee")
-    emp_id = st.text_input("Enter Employee ID", key="search_id")
+    st.header("Search Employees (by ID, Name, Skills, etc.)")
+    keyword = st.text_input("Enter any search keyword")
     if st.button("Search", key="submit_search"):
-        record = get_employee(emp_id)
-        if record:
-            keys = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
-                    "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
-            st.write(dict(zip(keys, record)))
-            if record[-1]:
-                st.markdown(f"[Download Resume]({record[-1]})")
+        results = flexible_search(keyword)
+        if results:
+            columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
+                       "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
+            df = pd.DataFrame(results, columns=columns)
+            st.dataframe(df)
         else:
-            st.warning("Employee not found.")
+            st.warning("No records matched your search.")
