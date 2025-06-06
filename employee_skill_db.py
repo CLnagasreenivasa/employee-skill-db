@@ -1,3 +1,4 @@
+
 import streamlit as st
 import sqlite3
 import os
@@ -43,11 +44,10 @@ def get_employee(emp_id):
 
 st.title("🧠 Employee Skill Database")
 
-menu = st.sidebar.selectbox("Choose Action", ["Add Employee", "Update Employee", "Search Employee"])
+tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update Employee", "🔍 Search Employee"])
 
-if menu == "Add Employee":
+with tab1:
     st.header("Add New Employee")
-
     emp_id = st.text_input("Employee ID")
     name = st.text_input("Employee Name")
     email = st.text_input("E-Mail ID")
@@ -63,7 +63,7 @@ if menu == "Add Employee":
     target = st.date_input("Target Date")
     resume = st.file_uploader("Upload Resume", type=["pdf", "docx"])
 
-    if st.button("Submit"):
+    if st.button("Submit", key="submit_add"):
         if emp_id and name:
             resume_path = ""
             if resume:
@@ -81,17 +81,16 @@ if menu == "Add Employee":
         else:
             st.warning("Employee ID and Name are mandatory!")
 
-elif menu == "Update Employee":
+with tab2:
     st.header("Update Employee Record")
-
-    emp_id = st.text_input("Enter Employee ID")
+    emp_id = st.text_input("Enter Employee ID", key="update_id")
     field = st.selectbox("Field to Update", ["name", "email", "role", "primary_skills",
                                              "secondary_skills", "certifications", "total_experience",
                                              "relevant_experience", "current_location",
                                              "career_aspiration", "action_plan", "target_date"])
     new_value = st.text_input(f"New Value for {field}")
 
-    if st.button("Update"):
+    if st.button("Update", key="submit_update"):
         if emp_id and new_value:
             try:
                 update_employee(emp_id, field, new_value)
@@ -101,11 +100,10 @@ elif menu == "Update Employee":
         else:
             st.warning("All fields required!")
 
-elif menu == "Search Employee":
+with tab3:
     st.header("Search Employee")
-
-    emp_id = st.text_input("Enter Employee ID")
-    if st.button("Search"):
+    emp_id = st.text_input("Enter Employee ID", key="search_id")
+    if st.button("Search", key="submit_search"):
         record = get_employee(emp_id)
         if record:
             keys = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
