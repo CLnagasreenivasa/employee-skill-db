@@ -122,9 +122,13 @@ with tab2:
             st.session_state.selected_emp_id = ""
 
     if st.session_state.matched_rows:
-        emp_ids = [f"{row[0]} - {row[1]}" for row in st.session_state.matched_rows]
-        selection = st.selectbox("Select a record to edit", emp_ids, key="select_emp_dropdown")
-        st.session_state.selected_emp_id = selection.split(" - ")[0]
+        st.write("### Select an employee to update:")
+        selected = st.radio(
+            "Matching Employees",
+            [f"{row[0]} - {row[1]} ({row[2]})" for row in st.session_state.matched_rows],
+            key="radio_select"
+        )
+        st.session_state.selected_emp_id = selected.split(" - ")[0]
 
     if st.session_state.selected_emp_id:
         row = next(row for row in st.session_state.matched_rows if row[0] == st.session_state.selected_emp_id)
@@ -155,16 +159,3 @@ with tab2:
                             aspiration, plan, str(target), resume_path)
             update_employee_record(row[0], updated_data)
             st.success("Record updated successfully!")
-
-with tab3:
-    st.header("Search Employees (by ID, Name, Skills, etc.)")
-    keyword = st.text_input("Enter any search keyword", key="search_generic")
-    if st.button("Search", key="submit_search"):
-        results = flexible_search(keyword)
-        if results:
-            columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
-                       "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
-            df = pd.DataFrame(results, columns=columns)
-            st.dataframe(df)
-        else:
-            st.warning("No records matched your search.")
