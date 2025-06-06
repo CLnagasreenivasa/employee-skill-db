@@ -48,7 +48,7 @@ def flexible_search(keyword):
     return c.fetchall()
 
 def add_employee(data):
-    c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
+    c.execute("INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
     conn.commit()
 
 def update_employee(emp_id, field_values):
@@ -158,9 +158,15 @@ with tab3:
     if st.button("Search", key="btn_search_tab"):
         results = flexible_search(keyword)
         if results:
-            columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
-                       "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
-            df = pd.DataFrame(results, columns=columns)
-            st.dataframe(df)
+            for row in results:
+                st.markdown(f"**{row[0]} - {row[1]}**")
+                st.write({
+                    "Email": row[2], "Role": row[3], "Primary Skills": row[4], "Secondary Skills": row[5],
+                    "Certifications": row[6], "Total Exp": row[7], "Relevant Exp": row[8],
+                    "Location": row[9], "Aspiration": row[10], "Action Plan": row[11], "Target Date": row[12]
+                })
+                if row[13] and os.path.exists(row[13]):
+                    with open(row[13], "rb") as f:
+                        st.download_button("📄 Download Resume", f, file_name=os.path.basename(row[13]), key=row[0])
         else:
             st.warning("No records matched your search.")
