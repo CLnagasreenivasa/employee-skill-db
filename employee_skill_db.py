@@ -11,11 +11,6 @@ c = conn.cursor()
 UPLOAD_DIR = "resumes"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Fetch all unique values for filters
-def get_unique_values(column):
-    c.execute(f"SELECT DISTINCT {column} FROM employees")
-    return sorted([row[0] for row in c.fetchall() if row[0]])
-
 c.execute("""
 CREATE TABLE IF NOT EXISTS employees (
     employee_id TEXT PRIMARY KEY,
@@ -52,31 +47,113 @@ def flexible_search(keyword):
     c.execute(query, (keyword,)*8)
     return c.fetchall()
 
-def search_with_filters(skill, location):
-    query = "SELECT * FROM employees WHERE 1=1"
-    conditions = []
-    params = []
+def add_employee(data):
+    c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
+    conn.commit()
 
-    if skill:
-        conditions.append("(primary_skills LIKE ? OR secondary_skills LIKE ?)")
-        params.extend((f"%{skill}%", f"%{skill}%"))
-    if location:
-        conditions.append("current_location LIKE ?")
-        params.append(f"%{location}%")
+def update_employee(emp_id, field_values):
+    query = """
+    UPDATE employees SET
+        name=?, email=?, role=?, primary_skills=?, secondary_skills=?,
+        certifications=?, total_experience=?, relevant_experience=?,
+        current_location=?, career_aspiration=?, action_plan=?, target_date=?, resume_path=?
+    WHERE employee_id=?
+    """
+    c.execute(query, (*field_values, emp_id))
+    conn.commit()
 
-    if conditions:
-        query += " AND " + " AND ".join(conditions)
-
-    c.execute(query, tuple(params))
-    return c.fetchall()
+def delete_employee(emp_id):
+    c.execute("DELETE FROM employees WHERE employee_id=?", (emp_id,))
+    conn.commit()
 
 st.title("🧠 Employee Skill Database")
 
-tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "🔍 Search + Export", "⚙️ Filters"])
+tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update / Delete", "🔍 Search Employees"])
 
-# Search tab with export
+# Add employee
+with tab1:
+    st.header("Add New Employee")
+    emp_id = st.text_input("Employee ID")
+    name = st.text_input("Employee Name")
+    email = st.text_input("E-Mail ID")
+    role = st.text_input("Role")
+    primary_skills = st.text_input("Primary Skills")
+    secondary_skills = st.text_input("Secondary Skills")
+    certifications = st.text_input("Certifications")
+    total_exp = st.number_input("Total Years of Experience", step=0.1)
+    relevant_exp = st.number_input("Relevant Years of Experience", step=0.1)
+    location = st.text_input("Current Location")
+    aspiration = st.text_area("Career Aspiration")
+    plan = st.text_area("Action Plan")
+    target = st.date_input("Target Date")
+    resume = st.file_uploader("Upload Resume", type=["pdf", "docx"])
+
+    if st.button("Submit", key="submit_add"):
+        if emp_id and name:
+            resume_path = ""
+            if resume:
+                resume_path = os.path.join(UPLOAD_DIR, f"{emp_id}_{resume.name}")
+                with open(resume_path, "wb") as f:
+                    f.write(resume.read())
+
+            data = (emp_id, name, email, role, primary_skills, secondary_skills, certifications,
+                    total_exp, relevant_exp, location, aspiration, plan, str(target), resume_path)
+            try:
+                add_employee(data)
+                st.success(f"Employee {name} added successfully!")
+            except sqlite3.IntegrityError:
+                st.error("Employee ID already exists!")
+        else:
+            st.warning("Employee ID and Name are mandatory!")
+
+# Update/Delete employee
 with tab2:
-    st.header("Search Employees")
+    st.header("Update or Delete Employees")
+    keyword = st.text_input("Search by keyword (name, skills, etc.):", key="search_update")
+
+    if st.button("Search", key="btn_search_update"):
+        results = flexible_search(keyword)
+        if results:
+            for idx, row in enumerate(results):
+                with st.expander(f"🔧 Edit: {row[0]} - {row[1]}"):
+                    name = st.text_input("Name", row[1], key=f"edit_name_{idx}")
+                    email = st.text_input("Email", row[2], key=f"edit_email_{idx}")
+                    role = st.text_input("Role", row[3], key=f"edit_role_{idx}")
+                    primary_skills = st.text_input("Primary Skills", row[4], key=f"edit_primary_{idx}")
+                    secondary_skills = st.text_input("Secondary Skills", row[5], key=f"edit_secondary_{idx}")
+                    certifications = st.text_input("Certifications", row[6], key=f"edit_cert_{idx}")
+                    total_exp = st.number_input("Total Exp", value=row[7], key=f"edit_total_{idx}")
+                    relevant_exp = st.number_input("Relevant Exp", value=row[8], key=f"edit_relevant_{idx}")
+                    location = st.text_input("Location", row[9], key=f"edit_location_{idx}")
+                    aspiration = st.text_area("Aspiration", row[10], key=f"edit_aspiration_{idx}")
+                    plan = st.text_area("Action Plan", row[11], key=f"edit_plan_{idx}")
+                    target = st.date_input("Target Date", pd.to_datetime(row[12]), key=f"edit_target_{idx}")
+                    resume = st.file_uploader("Upload Resume", type=["pdf", "docx"], key=f"edit_resume_{idx}")
+
+                    resume_path = row[13]
+                    if resume:
+                        resume_path = os.path.join(UPLOAD_DIR, f"{row[0]}_{resume.name}")
+                        with open(resume_path, "wb") as f:
+                            f.write(resume.read())
+
+                    if st.button("Update", key=f"btn_update_{idx}"):
+                        update_employee(row[0], (
+                            name, email, role, primary_skills, secondary_skills,
+                            certifications, total_exp, relevant_exp,
+                            location, aspiration, plan, str(target), resume_path
+                        ))
+                        st.success("Record updated successfully!")
+
+                    if st.button("❌ Delete", key=f"btn_delete_{idx}"):
+                        delete_employee(row[0])
+                        st.warning(f"Deleted record for {row[0]}!")
+
+        else:
+            st.warning("No matching records found.")
+
+# Search tab
+with tab3:
+    st.header("Search Employees (by ID, Name, Skills, etc.)")
     keyword = st.text_input("Enter any search keyword", key="search_tab")
     if st.button("Search", key="btn_search_tab"):
         results = flexible_search(keyword)
@@ -85,30 +162,5 @@ with tab2:
                        "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
             df = pd.DataFrame(results, columns=columns)
             st.dataframe(df)
-
-            st.download_button("📥 Export as CSV", df.to_csv(index=False), "employee_data.csv", "text/csv")
-            excel_bytes = df.to_excel(index=False, engine='openpyxl')
-            st.download_button("📥 Export as Excel", excel_bytes, "employee_data.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         else:
             st.warning("No records matched your search.")
-
-# Filter tab
-with tab3:
-    st.header("🎯 Filter by Skill or Location")
-    skill_options = get_unique_values("primary_skills")
-    location_options = get_unique_values("current_location")
-
-    selected_skill = st.selectbox("Select Primary Skill", [""] + skill_options)
-    selected_location = st.selectbox("Select Location", [""] + location_options)
-
-    if st.button("Apply Filters", key="btn_filter"):
-        filtered = search_with_filters(selected_skill, selected_location)
-        if filtered:
-            columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
-                       "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
-            df = pd.DataFrame(filtered, columns=columns)
-            st.dataframe(df)
-
-            st.download_button("📥 Export Filtered Data (CSV)", df.to_csv(index=False), "filtered_employee_data.csv", "text/csv")
-        else:
-            st.warning("No data found for selected filters.")
