@@ -88,7 +88,8 @@ with tab1:
         if emp_id and name:
             resume_path = ""
             if resume:
-                resume_path = os.path.join(UPLOAD_DIR, f"{emp_id}_{resume.name}")
+                safe_name = resume.name.replace(" ", "_")
+                resume_path = os.path.join(UPLOAD_DIR, f"{emp_id}_{safe_name}")
                 with open(resume_path, "wb") as f:
                     f.write(resume.read())
 
@@ -138,7 +139,8 @@ with tab2:
         if st.button("Update Record", key="submit_record_update"):
             resume_path = row[13]
             if resume:
-                resume_path = os.path.join(UPLOAD_DIR, f"{selected}_{resume.name}")
+                safe_name = resume.name.replace(" ", "_")
+                resume_path = os.path.join(UPLOAD_DIR, f"{selected}_{safe_name}")
                 with open(resume_path, "wb") as f:
                     f.write(resume.read())
 
@@ -154,9 +156,20 @@ with tab3:
     if st.button("Search", key="submit_search"):
         results = flexible_search(keyword)
         if results:
-            columns = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
-                       "Total Exp", "Relevant Exp", "Location", "Aspiration", "Action Plan", "Target Date", "Resume Path"]
-            df = pd.DataFrame(results, columns=columns)
-            st.dataframe(df)
-        else:
-            st.warning("No records matched your search.")
+            st.write("### Results")
+            for row in results:
+                st.markdown(f"**🆔 {row[0]} | 👤 {row[1]} | 📧 {row[2]} | 🧰 {row[4]} | 📍 {row[9]}**")
+                st.markdown(f"🔖 **Certifications:** {row[6]}")
+                st.markdown(f"🎯 **Career Aspiration:** {row[10]}")
+                st.markdown(f"📅 **Target Date:** {row[12]}")
+                if row[13] and os.path.exists(row[13]):
+                    with open(row[13], "rb") as file:
+                        btn = st.download_button(
+                            label="📎 Download Resume",
+                            data=file,
+                            file_name=os.path.basename(row[13]),
+                            mime="application/octet-stream"
+                        )
+                else:
+                    st.markdown("❌ No resume uploaded.")
+                st.markdown("---")
