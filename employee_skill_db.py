@@ -36,6 +36,23 @@ def add_employee(data):
 
 def update_full_employee(data):
     try:
+        st.write("🚧 Update called with the following data:")
+        st.json({
+            "employee_id": data[-1],
+            "name": data[0],
+            "email": data[1],
+            "role": data[2],
+            "primary_skills": data[3],
+            "secondary_skills": data[4],
+            "certifications": data[5],
+            "total_experience": data[6],
+            "relevant_experience": data[7],
+            "current_location": data[8],
+            "career_aspiration": data[9],
+            "action_plan": data[10],
+            "target_date": data[11]
+        })
+
         c.execute("""
             UPDATE employees SET 
                 name = ?, email = ?, role = ?, primary_skills = ?, secondary_skills = ?,
@@ -43,9 +60,17 @@ def update_full_employee(data):
                 current_location = ?, career_aspiration = ?, action_plan = ?, target_date = ?
             WHERE employee_id = ?
         """, data)
-        conn.commit()  # 🟢 Critical: ensure changes are saved
+
+        conn.commit()
+
+        if c.rowcount == 0:
+            st.error("⚠️ No record was updated. Please check if the Employee ID exists.")
+        else:
+            st.success(f"✅ {c.rowcount} record(s) updated successfully for Employee ID: {data[-1]}")
+
     except Exception as e:
-        st.error(f"DB Update failed: {e}")
+        st.exception(f"❌ Exception occurred while updating the employee record: {e}")
+
 
 def get_all_employees():
     c.execute("SELECT * FROM employees")
