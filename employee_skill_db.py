@@ -35,14 +35,17 @@ def add_employee(data):
     conn.commit()
 
 def update_full_employee(data):
-    c.execute("""
-        UPDATE employees SET 
-            name = ?, email = ?, role = ?, primary_skills = ?, secondary_skills = ?,
-            certifications = ?, total_experience = ?, relevant_experience = ?,
-            current_location = ?, career_aspiration = ?, action_plan = ?, target_date = ?
-        WHERE employee_id = ?
-    """, data)
-    conn.commit()
+    try:
+        c.execute("""
+            UPDATE employees SET 
+                name = ?, email = ?, role = ?, primary_skills = ?, secondary_skills = ?,
+                certifications = ?, total_experience = ?, relevant_experience = ?,
+                current_location = ?, career_aspiration = ?, action_plan = ?, target_date = ?
+            WHERE employee_id = ?
+        """, data)
+        conn.commit()  # 🟢 Critical: ensure changes are saved
+    except Exception as e:
+        st.error(f"DB Update failed: {e}")
 
 def get_all_employees():
     c.execute("SELECT * FROM employees")
