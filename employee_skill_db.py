@@ -2,15 +2,15 @@ import streamlit as st
 import sqlite3
 import os
 
-# Database setup
+# ---------------------------
+# Database Setup
+# ---------------------------
 conn = sqlite3.connect("employee_data.db", check_same_thread=False)
 c = conn.cursor()
 
-# Create uploads directory
 UPLOAD_DIR = "resumes"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Table creation
 c.execute("""
 CREATE TABLE IF NOT EXISTS employees (
     employee_id TEXT PRIMARY KEY,
@@ -31,7 +31,9 @@ CREATE TABLE IF NOT EXISTS employees (
 """)
 conn.commit()
 
-# Helper functions
+# ---------------------------
+# Helper Functions
+# ---------------------------
 def add_employee(data):
     c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
     conn.commit()
@@ -54,13 +56,17 @@ def get_employee(emp_id):
     c.execute("SELECT * FROM employees WHERE employee_id = ?", (emp_id,))
     return c.fetchone()
 
-# UI
+# ---------------------------
+# Streamlit UI
+# ---------------------------
 st.set_page_config(page_title="Employee Skill DB", layout="wide")
 st.title("🧠 Employee Skill Database")
 
 tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update Employee", "🔍 Search Employee"])
 
-# ------------------- ADD EMPLOYEE -------------------
+# ---------------------------
+# Add Employee Tab
+# ---------------------------
 with tab1:
     st.header("Add New Employee")
 
@@ -96,7 +102,9 @@ with tab1:
         else:
             st.warning("⚠️ Employee ID and Name are required!")
 
-# ------------------- UPDATE EMPLOYEE -------------------
+# ---------------------------
+# Update Employee Tab
+# ---------------------------
 with tab2:
     st.header("Update Employee Information")
 
@@ -145,9 +153,12 @@ with tab2:
         else:
             st.info("Please enter a value to search.")
 
-# ------------------- SEARCH EMPLOYEE -------------------
+# ---------------------------
+# Search Employee Tab
+# ---------------------------
 with tab3:
     st.header("Search Employee")
+
     emp_id = st.text_input("Enter Employee ID to Search")
     if st.button("Search"):
         record = get_employee(emp_id)
