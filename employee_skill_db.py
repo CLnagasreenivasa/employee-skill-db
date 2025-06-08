@@ -149,7 +149,7 @@ with tab2:
                                     certifications, total_exp, relevant_exp, location,
                                     aspiration, plan, str(target_date), emp_id
                                 ))
-                                st.success(f"✅ Employee '{emp_id}' updated successfully.")
+            
             else:
                 st.warning("No matching records found.")
         else:
