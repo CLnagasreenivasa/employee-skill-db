@@ -2,9 +2,7 @@ import streamlit as st
 import sqlite3
 import os
 
-# ---------------------------
-# Database Setup
-# ---------------------------
+# ------------------ DB Setup ------------------
 conn = sqlite3.connect("employee_data.db", check_same_thread=False)
 c = conn.cursor()
 
@@ -31,9 +29,7 @@ CREATE TABLE IF NOT EXISTS employees (
 """)
 conn.commit()
 
-# ---------------------------
-# Helper Functions
-# ---------------------------
+# ------------------ Helper Functions ------------------
 def add_employee(data):
     c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
     conn.commit()
@@ -56,20 +52,15 @@ def get_employee(emp_id):
     c.execute("SELECT * FROM employees WHERE employee_id = ?", (emp_id,))
     return c.fetchone()
 
-# ---------------------------
-# Streamlit UI
-# ---------------------------
+# ------------------ UI ------------------
 st.set_page_config(page_title="Employee Skill DB", layout="wide")
 st.title("🧠 Employee Skill Database")
 
 tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update Employee", "🔍 Search Employee"])
 
-# ---------------------------
-# Add Employee Tab
-# ---------------------------
+# ------------------ Add Employee ------------------
 with tab1:
     st.header("Add New Employee")
-
     emp_id = st.text_input("Employee ID")
     name = st.text_input("Employee Name")
     email = st.text_input("E-Mail ID")
@@ -102,9 +93,7 @@ with tab1:
         else:
             st.warning("⚠️ Employee ID and Name are required!")
 
-# ---------------------------
-# Update Employee Tab
-# ---------------------------
+# ------------------ Update Employee ------------------
 with tab2:
     st.header("Update Employee Information")
 
@@ -123,42 +112,36 @@ with tab2:
 
                     with st.expander(f"📋 {emp_id} — {record[1]}", expanded=False):
                         with st.form(key=f"form_{emp_id}"):
-                            name = st.text_input("Name", record[1], key=f"name_{emp_id}")
-                            email = st.text_input("Email", record[2], key=f"email_{emp_id}")
-                            role = st.text_input("Role", record[3], key=f"role_{emp_id}")
-                            primary_skills = st.text_input("Primary Skills", record[4], key=f"primary_{emp_id}")
-                            secondary_skills = st.text_input("Secondary Skills", record[5], key=f"secondary_{emp_id}")
-                            certifications = st.text_input("Certifications", record[6], key=f"certs_{emp_id}")
-                            total_exp = st.number_input("Total Experience", value=record[7], step=0.1, key=f"total_{emp_id}")
-                            relevant_exp = st.number_input("Relevant Experience", value=record[8], step=0.1, key=f"relevant_{emp_id}")
-                            location = st.text_input("Current Location", record[9], key=f"loc_{emp_id}")
-                            aspiration = st.text_area("Career Aspiration", record[10], key=f"asp_{emp_id}")
-                            plan = st.text_area("Action Plan", record[11], key=f"plan_{emp_id}")
-                            target_date = st.date_input("Target Date", record[12], key=f"target_{emp_id}")
+                            name = st.text_input("Name", record[1])
+                            email = st.text_input("Email", record[2])
+                            role = st.text_input("Role", record[3])
+                            primary_skills = st.text_input("Primary Skills", record[4])
+                            secondary_skills = st.text_input("Secondary Skills", record[5])
+                            certifications = st.text_input("Certifications", record[6])
+                            total_exp = st.number_input("Total Experience", value=record[7], step=0.1)
+                            relevant_exp = st.number_input("Relevant Experience", value=record[8], step=0.1)
+                            location = st.text_input("Current Location", record[9])
+                            aspiration = st.text_area("Career Aspiration", record[10])
+                            plan = st.text_area("Action Plan", record[11])
+                            target_date = st.date_input("Target Date", record[12])
 
                             submit = st.form_submit_button("Update Employee")
 
                             if submit:
-                                try:
-                                    update_full_employee((
-                                        name, email, role, primary_skills, secondary_skills,
-                                        certifications, total_exp, relevant_exp, location,
-                                        aspiration, plan, str(target_date), emp_id
-                                    ))
-                                    st.success(f"✅ Employee '{emp_id}' updated successfully!")
-                                except Exception as e:
-                                    st.error(f"❌ Error updating '{emp_id}': {e}")
+                                update_full_employee((
+                                    name, email, role, primary_skills, secondary_skills,
+                                    certifications, total_exp, relevant_exp, location,
+                                    aspiration, plan, str(target_date), emp_id
+                                ))
+                                st.success(f"✅ Employee '{emp_id}' updated successfully!")
             else:
                 st.warning("No matching records found.")
         else:
             st.info("Please enter a value to search.")
 
-# ---------------------------
-# Search Employee Tab
-# ---------------------------
+# ------------------ Search Employee ------------------
 with tab3:
     st.header("Search Employee")
-
     emp_id = st.text_input("Enter Employee ID to Search")
     if st.button("Search"):
         record = get_employee(emp_id)
