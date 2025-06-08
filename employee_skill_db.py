@@ -1,4 +1,3 @@
-
 import streamlit as st
 import sqlite3
 import os
@@ -50,27 +49,27 @@ def get_employee(emp_id):
 # UI
 st.title("🧠 Employee Skill Database")
 
-menu = st.sidebar.selectbox("Choose Action", ["Add Employee", "Update Employee", "Search Employee"])
+tab1, tab2, tab3 = st.tabs(["Add Employee", "Update Employee", "Search Employee"])
 
-if menu == "Add Employee":
+with tab1:
     st.header("Add New Employee")
 
-    emp_id = st.text_input("Employee ID")
-    name = st.text_input("Employee Name")
-    email = st.text_input("E-Mail ID")
-    role = st.text_input("Role")
-    primary_skills = st.text_input("Primary Skills")
-    secondary_skills = st.text_input("Secondary Skills")
-    certifications = st.text_input("Certifications")
-    total_exp = st.number_input("Total Years of Experience", step=0.1)
-    relevant_exp = st.number_input("Relevant Years of Experience", step=0.1)
-    location = st.text_input("Current Location")
-    aspiration = st.text_area("Career Aspiration")
-    plan = st.text_area("Action Plan")
-    target = st.date_input("Target Date")
-    resume = st.file_uploader("Upload Resume", type=["pdf", "docx"])
+    emp_id = st.text_input("Employee ID", key="add_id")
+    name = st.text_input("Employee Name", key="add_name")
+    email = st.text_input("E-Mail ID", key="add_email")
+    role = st.text_input("Role", key="add_role")
+    primary_skills = st.text_input("Primary Skills", key="add_primary_skills")
+    secondary_skills = st.text_input("Secondary Skills", key="add_secondary_skills")
+    certifications = st.text_input("Certifications", key="add_certifications")
+    total_exp = st.number_input("Total Years of Experience", step=0.1, key="add_total_exp")
+    relevant_exp = st.number_input("Relevant Years of Experience", step=0.1, key="add_relevant_exp")
+    location = st.text_input("Current Location", key="add_location")
+    aspiration = st.text_area("Career Aspiration", key="add_aspiration")
+    plan = st.text_area("Action Plan", key="add_plan")
+    target = st.date_input("Target Date", key="add_target")
+    resume = st.file_uploader("Upload Resume", type=["pdf", "docx"], key="add_resume")
 
-    if st.button("Submit"):
+    if st.button("Submit", key="add_submit"):
         if emp_id and name:
             resume_path = ""
             if resume:
@@ -88,17 +87,17 @@ if menu == "Add Employee":
         else:
             st.warning("Employee ID and Name are mandatory!")
 
-elif menu == "Update Employee":
+with tab2:
     st.header("Update Employee Record")
 
-    emp_id = st.text_input("Enter Employee ID")
+    emp_id = st.text_input("Enter Employee ID", key="update_id")
     field = st.selectbox("Field to Update", ["name", "email", "role", "primary_skills",
                                              "secondary_skills", "certifications", "total_experience",
                                              "relevant_experience", "current_location",
-                                             "career_aspiration", "action_plan", "target_date"])
-    new_value = st.text_input(f"New Value for {field}")
+                                             "career_aspiration", "action_plan", "target_date"], key="update_field")
+    new_value = st.text_input(f"New Value for {field}", key="update_value")
 
-    if st.button("Update"):
+    if st.button("Update", key="update_submit"):
         if emp_id and new_value:
             try:
                 update_employee(emp_id, field, new_value)
@@ -108,11 +107,11 @@ elif menu == "Update Employee":
         else:
             st.warning("All fields required!")
 
-elif menu == "Search Employee":
+with tab3:
     st.header("Search Employee")
 
-    emp_id = st.text_input("Enter Employee ID")
-    if st.button("Search"):
+    emp_id = st.text_input("Enter Employee ID", key="search_id")
+    if st.button("Search", key="search_submit"):
         record = get_employee(emp_id)
         if record:
             keys = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills", "Certifications",
