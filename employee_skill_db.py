@@ -3,14 +3,14 @@ import sqlite3
 import os
 
 # Database setup
-conn = sqlite3.connect("employee_data.db")
+conn = sqlite3.connect("employee_data.db", check_same_thread=False)
 c = conn.cursor()
 
 # Create uploads directory
 UPLOAD_DIR = "resumes"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Create table if not exists
+# Table creation
 c.execute("""
 CREATE TABLE IF NOT EXISTS employees (
     employee_id TEXT PRIMARY KEY,
@@ -31,27 +31,39 @@ CREATE TABLE IF NOT EXISTS employees (
 """)
 conn.commit()
 
-# Database operations
+# Helper functions
 def add_employee(data):
     c.execute('''INSERT INTO employees VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
     conn.commit()
 
-def update_employee(emp_id, field, new_value):
-    c.execute(f"UPDATE employees SET {field} = ? WHERE employee_id = ?", (new_value, emp_id))
+def update_full_employee(data):
+    c.execute("""
+        UPDATE employees SET 
+            name = ?, email = ?, role = ?, primary_skills = ?, secondary_skills = ?,
+            certifications = ?, total_experience = ?, relevant_experience = ?,
+            current_location = ?, career_aspiration = ?, action_plan = ?, target_date = ?
+        WHERE employee_id = ?
+    """, data)
     conn.commit()
+
+def get_all_employees():
+    c.execute("SELECT * FROM employees")
+    return c.fetchall()
 
 def get_employee(emp_id):
     c.execute("SELECT * FROM employees WHERE employee_id = ?", (emp_id,))
     return c.fetchone()
 
-# App UI
+# UI
+st.set_page_config(page_title="Employee Skill DB", layout="wide")
 st.title("🧠 Employee Skill Database")
 
-# Top-aligned tabs
 tab1, tab2, tab3 = st.tabs(["➕ Add Employee", "✏️ Update Employee", "🔍 Search Employee"])
 
+# ------------------- ADD EMPLOYEE -------------------
 with tab1:
     st.header("Add New Employee")
+
     emp_id = st.text_input("Employee ID")
     name = st.text_input("Employee Name")
     email = st.text_input("E-Mail ID")
@@ -84,6 +96,7 @@ with tab1:
         else:
             st.warning("⚠️ Employee ID and Name are required!")
 
+# ------------------- UPDATE EMPLOYEE -------------------
 with tab2:
     st.header("Update Employee Information")
 
@@ -91,26 +104,15 @@ with tab2:
 
     if st.button("Search Records"):
         if search_query.strip():
-            c.execute("SELECT * FROM employees")
-            all_records = c.fetchall()
-            matching = []
-            for record in all_records:
-                if any(search_query.lower() in str(field).lower() for field in record):
-                    matching.append(record)
+            all_records = get_all_employees()
+            matching = [r for r in all_records if any(search_query.lower() in str(f).lower() for f in r)]
 
             if matching:
-                keys = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
-                        "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
-                        "Action Plan", "Target Date", "Resume Path"]
-
-                selected = st.selectbox("Select Record to Edit (by Employee ID)", [r[0] for r in matching])
-
-                selected_record = next((r for r in matching if r[0] == selected), None)
+                selected_id = st.selectbox("Select Employee to Edit", [r[0] for r in matching])
+                selected_record = next((r for r in matching if r[0] == selected_id), None)
 
                 if selected_record:
-                    st.markdown("### ✏️ Edit Employee Details")
-
-                    emp_id = selected_record[0]
+                    st.markdown("### ✏️ Edit Details")
                     name = st.text_input("Name", selected_record[1])
                     email = st.text_input("Email", selected_record[2])
                     role = st.text_input("Role", selected_record[3])
@@ -119,30 +121,27 @@ with tab2:
                     certifications = st.text_input("Certifications", selected_record[6])
                     total_exp = st.number_input("Total Experience", value=selected_record[7], step=0.1)
                     relevant_exp = st.number_input("Relevant Experience", value=selected_record[8], step=0.1)
-                    location = st.text_input("Location", selected_record[9])
+                    location = st.text_input("Current Location", selected_record[9])
                     aspiration = st.text_area("Career Aspiration", selected_record[10])
                     plan = st.text_area("Action Plan", selected_record[11])
                     target_date = st.date_input("Target Date", selected_record[12])
 
                     if st.button("Update Employee"):
                         try:
-                            c.execute("""
-                                UPDATE employees SET 
-                                    name = ?, email = ?, role = ?, primary_skills = ?, secondary_skills = ?,
-                                    certifications = ?, total_experience = ?, relevant_experience = ?,
-                                    current_location = ?, career_aspiration = ?, action_plan = ?, target_date = ?
-                                WHERE employee_id = ?
-                            """, (name, email, role, primary_skills, secondary_skills, certifications,
-                                  total_exp, relevant_exp, location, aspiration, plan, str(target_date), emp_id))
-                            conn.commit()
-                            st.success(f"✅ Employee '{emp_id}' updated successfully!")
+                            update_full_employee((
+                                name, email, role, primary_skills, secondary_skills,
+                                certifications, total_exp, relevant_exp, location,
+                                aspiration, plan, str(target_date), selected_id
+                            ))
+                            st.success(f"✅ Employee '{selected_id}' updated successfully!")
                         except Exception as e:
-                            st.error(f"❌ Error updating employee: {e}")
+                            st.error(f"❌ Error: {e}")
             else:
                 st.warning("No matching records found.")
         else:
             st.info("Please enter a value to search.")
 
+# ------------------- SEARCH EMPLOYEE -------------------
 with tab3:
     st.header("Search Employee")
     emp_id = st.text_input("Enter Employee ID to Search")
