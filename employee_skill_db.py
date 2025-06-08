@@ -126,6 +126,10 @@ with tab2:
                     emp_id = record[0]
                     suffix = f"{emp_id}_{idx}"
 
+                    # Track submission status to persist success message
+                    if f"form_submitted_{suffix}" not in st.session_state:
+                        st.session_state[f"form_submitted_{suffix}"] = False
+
                     with st.expander(f"📋 {emp_id} — {record[1]}", expanded=False):
                         with st.form(key=f"form_{suffix}"):
                             name = st.text_input("Name", record[1], key=f"name_{suffix}")
@@ -141,7 +145,7 @@ with tab2:
                             plan = st.text_area("Action Plan", record[11], key=f"plan_{suffix}")
                             target_date = st.date_input("Target Date", record[12], key=f"target_{suffix}")
 
-                            submitted = st.form_submit_button("Update Employee", type="primary")
+                            submitted = st.form_submit_button("Update Employee")
 
                             if submitted:
                                 update_full_employee((
@@ -149,11 +153,16 @@ with tab2:
                                     certifications, total_exp, relevant_exp, location,
                                     aspiration, plan, str(target_date), emp_id
                                 ))
-            
+                                st.session_state[f"form_submitted_{suffix}"] = True
+
+                        # Show message after form submission
+                        if st.session_state[f"form_submitted_{suffix}"]:
+                            st.success(f"✅ Employee '{emp_id}' updated successfully.")
             else:
                 st.warning("No matching records found.")
         else:
             st.info("Please enter a value to search.")
+
 
 # ------------------ Search Employee ------------------
 with tab3:
