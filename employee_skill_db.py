@@ -100,33 +100,34 @@ with tab1:
 with tab2:
     st.header("Update Employee Information")
 
-    search_query = st.text_input("🔍 Search by any field value")
+    search_query = st.text_input("🔍 Search by any field value", key="update_search_input")
 
-    if st.button("Search Records"):
+    if st.button("Search Records", key="update_search_button"):
         if search_query.strip():
             all_records = get_all_employees()
             matching = [r for r in all_records if any(search_query.lower() in str(f).lower() for f in r)]
 
             if matching:
-                selected_id = st.selectbox("Select Employee to Edit", [r[0] for r in matching])
+                selected_id = st.selectbox("Select Employee to Edit", [r[0] for r in matching], key="update_select_emp")
                 selected_record = next((r for r in matching if r[0] == selected_id), None)
 
                 if selected_record:
                     st.markdown("### ✏️ Edit Details")
-                    name = st.text_input("Name", selected_record[1])
-                    email = st.text_input("Email", selected_record[2])
-                    role = st.text_input("Role", selected_record[3])
-                    primary_skills = st.text_input("Primary Skills", selected_record[4])
-                    secondary_skills = st.text_input("Secondary Skills", selected_record[5])
-                    certifications = st.text_input("Certifications", selected_record[6])
-                    total_exp = st.number_input("Total Experience", value=selected_record[7], step=0.1)
-                    relevant_exp = st.number_input("Relevant Experience", value=selected_record[8], step=0.1)
-                    location = st.text_input("Current Location", selected_record[9])
-                    aspiration = st.text_area("Career Aspiration", selected_record[10])
-                    plan = st.text_area("Action Plan", selected_record[11])
-                    target_date = st.date_input("Target Date", selected_record[12])
 
-                    if st.button("Update Employee"):
+                    name = st.text_input("Name", selected_record[1], key="update_name")
+                    email = st.text_input("Email", selected_record[2], key="update_email")
+                    role = st.text_input("Role", selected_record[3], key="update_role")
+                    primary_skills = st.text_input("Primary Skills", selected_record[4], key="update_primary_skills")
+                    secondary_skills = st.text_input("Secondary Skills", selected_record[5], key="update_secondary_skills")
+                    certifications = st.text_input("Certifications", selected_record[6], key="update_certifications")
+                    total_exp = st.number_input("Total Experience", value=selected_record[7], step=0.1, key="update_total_exp")
+                    relevant_exp = st.number_input("Relevant Experience", value=selected_record[8], step=0.1, key="update_relevant_exp")
+                    location = st.text_input("Current Location", selected_record[9], key="update_location")
+                    aspiration = st.text_area("Career Aspiration", selected_record[10], key="update_aspiration")
+                    plan = st.text_area("Action Plan", selected_record[11], key="update_plan")
+                    target_date = st.date_input("Target Date", selected_record[12], key="update_target_date")
+
+                    if st.button("Update Employee", key="update_submit_button"):
                         try:
                             update_full_employee((
                                 name, email, role, primary_skills, secondary_skills,
@@ -140,6 +141,7 @@ with tab2:
                 st.warning("No matching records found.")
         else:
             st.info("Please enter a value to search.")
+
 
 # ------------------- SEARCH EMPLOYEE -------------------
 with tab3:
