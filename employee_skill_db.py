@@ -123,49 +123,33 @@ with tab1:
 
 # ------------------ Update Employee ------------------
 with tab2:
-    st.header("Update Employee Information")
+    st.header("🧪 TEST UPDATE FUNCTION DIRECTLY")
 
-    search_query = st.text_input("🔍 Search by any field value", key="update_search_input")
+    test_emp_id = "E001"  # use an actual ID that exists in your DB
 
-    if st.button("Search Records", key="update_search_button"):
-        if search_query.strip():
-            all_records = get_all_employees()
-            matching = [r for r in all_records if any(search_query.lower() in str(f).lower() for f in r)]
+    with st.form(key="test_update_form"):
+        name = st.text_input("Name", "Test Name")
+        email = st.text_input("Email", "test@example.com")
+        role = st.text_input("Role", "Developer")
+        primary_skills = st.text_input("Primary Skills", "Python")
+        secondary_skills = st.text_input("Secondary Skills", "Streamlit")
+        certifications = st.text_input("Certifications", "AWS")
+        total_exp = st.number_input("Total Experience", value=3.5)
+        relevant_exp = st.number_input("Relevant Experience", value=2.5)
+        location = st.text_input("Current Location", "Remote")
+        aspiration = st.text_area("Career Aspiration", "Become tech lead")
+        plan = st.text_area("Action Plan", "Certifications + mentoring")
+        target_date = st.date_input("Target Date")
 
-            if matching:
-                st.markdown("### 🔎 Matching Employee Records")
+        submit = st.form_submit_button("🔥 Test Update Now")
 
-                for record in matching:
-                    emp_id = record[0]
-
-                    with st.expander(f"📋 {emp_id} — {record[1]}", expanded=False):
-                        with st.form(key=f"form_{emp_id}"):
-                            name = st.text_input("Name", record[1])
-                            email = st.text_input("Email", record[2])
-                            role = st.text_input("Role", record[3])
-                            primary_skills = st.text_input("Primary Skills", record[4])
-                            secondary_skills = st.text_input("Secondary Skills", record[5])
-                            certifications = st.text_input("Certifications", record[6])
-                            total_exp = st.number_input("Total Experience", value=record[7], step=0.1)
-                            relevant_exp = st.number_input("Relevant Experience", value=record[8], step=0.1)
-                            location = st.text_input("Current Location", record[9])
-                            aspiration = st.text_area("Career Aspiration", record[10])
-                            plan = st.text_area("Action Plan", record[11])
-                            target_date = st.date_input("Target Date", record[12])
-
-                            submit = st.form_submit_button("Update Employee")
-
-                            if submit:
-                                update_full_employee((
-                                    name, email, role, primary_skills, secondary_skills,
-                                    certifications, total_exp, relevant_exp, location,
-                                    aspiration, plan, str(target_date), emp_id
-                                ))
-                                st.success(f"✅ Employee '{emp_id}' updated successfully!")
-            else:
-                st.warning("No matching records found.")
-        else:
-            st.info("Please enter a value to search.")
+        if submit:
+            st.write("✅ FORM SUBMITTED")
+            update_full_employee((
+                name, email, role, primary_skills, secondary_skills,
+                certifications, total_exp, relevant_exp, location,
+                aspiration, plan, str(target_date), test_emp_id
+            ))
 
 # ------------------ Search Employee ------------------
 with tab3:
