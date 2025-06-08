@@ -109,43 +109,37 @@ with tab2:
 
             if matching:
                 st.markdown("### 🔎 Matching Employee Records")
+
                 keys = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
                         "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
                         "Action Plan", "Target Date", "Resume Path"]
-                for record in matching:
-                    with st.expander(f"📋 {record[0]} — {record[1]}"):
-                        for k, v in zip(keys, record):
-                            st.write(f"**{k}:** {v}")
 
-                selected_id = st.selectbox("✏️ Select Employee ID to Edit", [r[0] for r in matching], key="update_select_emp")
-                selected_record = next((r for r in matching if r[0] == selected_id), None)
+                for index, record in enumerate(matching):
+                    with st.expander(f"📋 {record[0]} — {record[1]}", expanded=False):
 
-                if selected_record:
-                    st.markdown("### 🛠️ Edit Details")
+                        name = st.text_input("Name", record[1], key=f"name_{index}")
+                        email = st.text_input("Email", record[2], key=f"email_{index}")
+                        role = st.text_input("Role", record[3], key=f"role_{index}")
+                        primary_skills = st.text_input("Primary Skills", record[4], key=f"primary_skills_{index}")
+                        secondary_skills = st.text_input("Secondary Skills", record[5], key=f"secondary_skills_{index}")
+                        certifications = st.text_input("Certifications", record[6], key=f"certifications_{index}")
+                        total_exp = st.number_input("Total Experience", value=record[7], step=0.1, key=f"total_exp_{index}")
+                        relevant_exp = st.number_input("Relevant Experience", value=record[8], step=0.1, key=f"relevant_exp_{index}")
+                        location = st.text_input("Current Location", record[9], key=f"location_{index}")
+                        aspiration = st.text_area("Career Aspiration", record[10], key=f"aspiration_{index}")
+                        plan = st.text_area("Action Plan", record[11], key=f"plan_{index}")
+                        target_date = st.date_input("Target Date", record[12], key=f"target_{index}")
 
-                    name = st.text_input("Name", selected_record[1], key="update_name")
-                    email = st.text_input("Email", selected_record[2], key="update_email")
-                    role = st.text_input("Role", selected_record[3], key="update_role")
-                    primary_skills = st.text_input("Primary Skills", selected_record[4], key="update_primary_skills")
-                    secondary_skills = st.text_input("Secondary Skills", selected_record[5], key="update_secondary_skills")
-                    certifications = st.text_input("Certifications", selected_record[6], key="update_certifications")
-                    total_exp = st.number_input("Total Experience", value=selected_record[7], step=0.1, key="update_total_exp")
-                    relevant_exp = st.number_input("Relevant Experience", value=selected_record[8], step=0.1, key="update_relevant_exp")
-                    location = st.text_input("Current Location", selected_record[9], key="update_location")
-                    aspiration = st.text_area("Career Aspiration", selected_record[10], key="update_aspiration")
-                    plan = st.text_area("Action Plan", selected_record[11], key="update_plan")
-                    target_date = st.date_input("Target Date", selected_record[12], key="update_target_date")
-
-                    if st.button("Update Employee", key="update_submit_button"):
-                        try:
-                            update_full_employee((
-                                name, email, role, primary_skills, secondary_skills,
-                                certifications, total_exp, relevant_exp, location,
-                                aspiration, plan, str(target_date), selected_id
-                            ))
-                            st.success(f"✅ Employee '{selected_id}' updated successfully!")
-                        except Exception as e:
-                            st.error(f"❌ Error: {e}")
+                        if st.button("Update Employee", key=f"update_btn_{index}"):
+                            try:
+                                update_full_employee((
+                                    name, email, role, primary_skills, secondary_skills,
+                                    certifications, total_exp, relevant_exp, location,
+                                    aspiration, plan, str(target_date), record[0]
+                                ))
+                                st.success(f"✅ Employee '{record[0]}' updated successfully!")
+                            except Exception as e:
+                                st.error(f"❌ Error: {e}")
             else:
                 st.warning("No matching records found.")
         else:
