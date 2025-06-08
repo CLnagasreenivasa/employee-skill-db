@@ -86,22 +86,62 @@ with tab1:
 
 with tab2:
     st.header("Update Employee Information")
-    emp_id = st.text_input("Employee ID to Update")
-    field = st.selectbox("Field to Update", ["name", "email", "role", "primary_skills",
-                                             "secondary_skills", "certifications", "total_experience",
-                                             "relevant_experience", "current_location",
-                                             "career_aspiration", "action_plan", "target_date"])
-    new_value = st.text_input(f"New value for {field}")
 
-    if st.button("Update Employee"):
-        if emp_id and new_value:
-            try:
-                update_employee(emp_id, field, new_value)
-                st.success("✅ Employee data updated.")
-            except Exception as e:
-                st.error(f"❌ Error: {e}")
+    search_query = st.text_input("🔍 Search by any field value")
+
+    if st.button("Search Records"):
+        if search_query.strip():
+            c.execute("SELECT * FROM employees")
+            all_records = c.fetchall()
+            matching = []
+            for record in all_records:
+                if any(search_query.lower() in str(field).lower() for field in record):
+                    matching.append(record)
+
+            if matching:
+                keys = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
+                        "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
+                        "Action Plan", "Target Date", "Resume Path"]
+
+                selected = st.selectbox("Select Record to Edit (by Employee ID)", [r[0] for r in matching])
+
+                selected_record = next((r for r in matching if r[0] == selected), None)
+
+                if selected_record:
+                    st.markdown("### ✏️ Edit Employee Details")
+
+                    emp_id = selected_record[0]
+                    name = st.text_input("Name", selected_record[1])
+                    email = st.text_input("Email", selected_record[2])
+                    role = st.text_input("Role", selected_record[3])
+                    primary_skills = st.text_input("Primary Skills", selected_record[4])
+                    secondary_skills = st.text_input("Secondary Skills", selected_record[5])
+                    certifications = st.text_input("Certifications", selected_record[6])
+                    total_exp = st.number_input("Total Experience", value=selected_record[7], step=0.1)
+                    relevant_exp = st.number_input("Relevant Experience", value=selected_record[8], step=0.1)
+                    location = st.text_input("Location", selected_record[9])
+                    aspiration = st.text_area("Career Aspiration", selected_record[10])
+                    plan = st.text_area("Action Plan", selected_record[11])
+                    target_date = st.date_input("Target Date", selected_record[12])
+
+                    if st.button("Update Employee"):
+                        try:
+                            c.execute("""
+                                UPDATE employees SET 
+                                    name = ?, email = ?, role = ?, primary_skills = ?, secondary_skills = ?,
+                                    certifications = ?, total_experience = ?, relevant_experience = ?,
+                                    current_location = ?, career_aspiration = ?, action_plan = ?, target_date = ?
+                                WHERE employee_id = ?
+                            """, (name, email, role, primary_skills, secondary_skills, certifications,
+                                  total_exp, relevant_exp, location, aspiration, plan, str(target_date), emp_id))
+                            conn.commit()
+                            st.success(f"✅ Employee '{emp_id}' updated successfully!")
+                        except Exception as e:
+                            st.error(f"❌ Error updating employee: {e}")
+            else:
+                st.warning("No matching records found.")
         else:
-            st.warning("⚠️ All fields are required!")
+            st.info("Please enter a value to search.")
 
 with tab3:
     st.header("Search Employee")
