@@ -108,11 +108,20 @@ with tab2:
             matching = [r for r in all_records if any(search_query.lower() in str(f).lower() for f in r)]
 
             if matching:
-                selected_id = st.selectbox("Select Employee to Edit", [r[0] for r in matching], key="update_select_emp")
+                st.markdown("### 🔎 Matching Employee Records")
+                keys = ["Employee ID", "Name", "Email", "Role", "Primary Skills", "Secondary Skills",
+                        "Certifications", "Total Exp", "Relevant Exp", "Location", "Aspiration",
+                        "Action Plan", "Target Date", "Resume Path"]
+                for record in matching:
+                    with st.expander(f"📋 {record[0]} — {record[1]}"):
+                        for k, v in zip(keys, record):
+                            st.write(f"**{k}:** {v}")
+
+                selected_id = st.selectbox("✏️ Select Employee ID to Edit", [r[0] for r in matching], key="update_select_emp")
                 selected_record = next((r for r in matching if r[0] == selected_id), None)
 
                 if selected_record:
-                    st.markdown("### ✏️ Edit Details")
+                    st.markdown("### 🛠️ Edit Details")
 
                     name = st.text_input("Name", selected_record[1], key="update_name")
                     email = st.text_input("Email", selected_record[2], key="update_email")
@@ -141,7 +150,6 @@ with tab2:
                 st.warning("No matching records found.")
         else:
             st.info("Please enter a value to search.")
-
 
 # ------------------- SEARCH EMPLOYEE -------------------
 with tab3:
