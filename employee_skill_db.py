@@ -115,31 +115,35 @@ with tab2:
                         "Action Plan", "Target Date", "Resume Path"]
 
                 for index, record in enumerate(matching):
-                    with st.expander(f"📋 {record[0]} — {record[1]}", expanded=False):
+                    emp_id = record[0]
+                    expander_key = f"expander_{emp_id}"
+                    with st.expander(f"📋 {emp_id} — {record[1]}", expanded=False):
 
-                        name = st.text_input("Name", record[1], key=f"name_{index}")
-                        email = st.text_input("Email", record[2], key=f"email_{index}")
-                        role = st.text_input("Role", record[3], key=f"role_{index}")
-                        primary_skills = st.text_input("Primary Skills", record[4], key=f"primary_skills_{index}")
-                        secondary_skills = st.text_input("Secondary Skills", record[5], key=f"secondary_skills_{index}")
-                        certifications = st.text_input("Certifications", record[6], key=f"certifications_{index}")
-                        total_exp = st.number_input("Total Experience", value=record[7], step=0.1, key=f"total_exp_{index}")
-                        relevant_exp = st.number_input("Relevant Experience", value=record[8], step=0.1, key=f"relevant_exp_{index}")
-                        location = st.text_input("Current Location", record[9], key=f"location_{index}")
-                        aspiration = st.text_area("Career Aspiration", record[10], key=f"aspiration_{index}")
-                        plan = st.text_area("Action Plan", record[11], key=f"plan_{index}")
-                        target_date = st.date_input("Target Date", record[12], key=f"target_{index}")
+                        name = st.text_input("Name", record[1], key=f"name_{emp_id}")
+                        email = st.text_input("Email", record[2], key=f"email_{emp_id}")
+                        role = st.text_input("Role", record[3], key=f"role_{emp_id}")
+                        primary_skills = st.text_input("Primary Skills", record[4], key=f"primary_{emp_id}")
+                        secondary_skills = st.text_input("Secondary Skills", record[5], key=f"secondary_{emp_id}")
+                        certifications = st.text_input("Certifications", record[6], key=f"certs_{emp_id}")
+                        total_exp = st.number_input("Total Experience", value=record[7], step=0.1, key=f"total_{emp_id}")
+                        relevant_exp = st.number_input("Relevant Experience", value=record[8], step=0.1, key=f"relevant_{emp_id}")
+                        location = st.text_input("Current Location", record[9], key=f"loc_{emp_id}")
+                        aspiration = st.text_area("Career Aspiration", record[10], key=f"asp_{emp_id}")
+                        plan = st.text_area("Action Plan", record[11], key=f"plan_{emp_id}")
+                        target_date = st.date_input("Target Date", record[12], key=f"target_{emp_id}")
 
-                        if st.button("Update Employee", key=f"update_btn_{index}"):
+                        update_button = st.button("Update Employee", key=f"update_btn_{emp_id}")
+
+                        if update_button:
                             try:
                                 update_full_employee((
                                     name, email, role, primary_skills, secondary_skills,
                                     certifications, total_exp, relevant_exp, location,
-                                    aspiration, plan, str(target_date), record[0]
+                                    aspiration, plan, str(target_date), emp_id
                                 ))
-                                st.success(f"✅ Employee '{record[0]}' updated successfully!")
+                                st.success(f"✅ Employee '{emp_id}' updated successfully!")
                             except Exception as e:
-                                st.error(f"❌ Error: {e}")
+                                st.error(f"❌ Error updating '{emp_id}': {e}")
             else:
                 st.warning("No matching records found.")
         else:
